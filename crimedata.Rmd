@@ -1,0 +1,96 @@
+---
+title: "Preliminary Safety Datasets"
+output: html_document
+date: "2023-09-18"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+specie <- c(rep("sorgho" , 3) , rep("poacee" , 3) , rep("banana" , 3) , rep("triticum" , 3) )
+condition <- rep(c("normal" , "stress" , "Nitrogen") , 4)
+value <- abs(rnorm(12 , 0 , 15))
+data <- data.frame(specie,condition,value)
+```
+
+
+1. How does the presence of transit stations influence urban development and property values?
+2. Do transit stations increase or decrease safety for the surrounding environment?
+3. Do new transit stations have a positive or negative impact on their environment?
+
+
+```{r}
+chicagocrime <- tempfile()
+chicagocrime <- read.csv("Crimes_-_One_year_prior_to_present.csv")
+```
+
+**Who: Data is collected by the Chicago Police Department through their CLEAR (Citizen Law Enforcement Analysis and Reporting) system**
+
+**What:  This data reflects reported incidents of crime that have occurred in the City of Chicago during a specific time period. This data set contains 90 days of information and the most recent data available is seven days prior to today’s date. In order to protect the privacy of crime victims, addresses are shown at the block level only and specific locations are not identified. **
+
+**Limitations: This data is incredibly recent and is updated daily. It could be cool to create a live visualization with the daily updated data. Limitations include that there isn't exact locations of the data, so thinking about exact proximity to a transit station could be somewhat difficult**
+
+
+
+```{r}
+colnames(chicagocrime)
+```
+
+```{r}
+chicagocrime <- chicagocrime %>%  
+  mutate(Date = mdy_hms(DATE..OF.OCCURRENCE)) %>% 
+  mutate(DateTime = force_tz(Date, "America/Chicago")) %>% 
+  mutate(year = year(Date)) %>% 
+  mutate(month = month(Date))
+
+latestcrime <- chicagocrime %>% 
+  filter(year == 2023) %>% 
+  filter(month == 9)
+
+street <- latestcrime %>% 
+  filter(LOCATION.DESCRIPTION == "STREET") %>% 
+  mutate(hour = hour(Date)) %>% 
+  filter(hour >= 22)
+```
+
+```{r}
+ggplot(street, aes(x=PRIMARY.DESCRIPTION)) +
+  geom_bar() +
+  scale_x_discrete(guide = guide_axis(angle = 70)) +
+  xlab("Type of Crime") +
+  ylab("Number of Occurrances")
+
+```
+
+```{r}
+londonbus <- tempfile()
+londonbus <- read.csv("injury-details-2023-q2.csv")
+
+incidenttype <- londonbus %>% 
+  group_by(Incident.type) %>% 
+  tally()
+
+londonbus <- filter(londonbus, Incident.type %in% c("Assault", "Robbery", "Vandalism / Hooliganism"))
+
+londonbus <- filter(londonbus, Gender != "Unknown")
+```
+
+**Who: TFL (Transport for London) through their Bus Safety Dashboard**
+
+**What: All bus related injuries in TFL buses since 2014, filtered to only include injuries caused by other individuals**
+
+**Limitations: Doesn't provide specific location of accidents, though it provides international data. Also focuses more on incidents occurring on buses so doesn't look at data in surrounding area**
+
+```{r}
+colnames(londonbus)
+```
+
+```{r}
+ggplot(londonbus, aes(x=Gender)) +
+  geom_bar()
+```
+
+**While these datasets have differences in geographical location and scale of data, it might be interesting to merge them on the basis of type of violent incident, comparing the prevalency of them in Chicago v. London. It would take a bit of changing some of the value names, but we could combine Incident.type with PRIMARY.DESCRIPTION, though it would take a bit of work**
