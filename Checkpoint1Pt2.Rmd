@@ -1,0 +1,90 @@
+---
+title: 'Part 2: Estimate Covariance and Correlation'
+output: html_document
+date: "2023-09-18"
+---
+
+
+4.
+
+```{r}
+m <- 500
+times <- 1:m
+e <- rnorm(m)
+y <- rep(0, m)
+
+y[1] <- 1 # initial value
+
+for(i in times[-1]){
+  y[i] <- 0.9*y[i-1] + e[i]  # current based on past value plus error
+}
+
+plot(times, y, type='l')
+```
+
+```{r}
+cov(y, e)
+cor(y,e)
+```
+
+5. 
+```{r}
+m <- 500
+times <- 1:m
+e <- rnorm(m)
+y <- rep(0, m)
+
+y[1] <- 1 # initial value
+
+for(i in times[-1]){
+  y[i] <- -0.3*y[i-1] + e[i]  # current based on past value plus error
+}
+
+plot(times, y, type='l')
+```
+
+```{r}
+cov(y,e)
+cor(y,e)
+```
+
+6.
+
+```{r}
+rowOne <- c(0.25,0.175,0.1225,0.08575,0.060025,0.0420175,0.02941225,0.020588575,0.0144120025,0.0100884018)
+rowTwo <- c(0.175,0.25,0.175,0.1225,0.08575,0.060025,0.0420175,0.02941225,0.020588575,0.0144120025)
+rowThree <- c(0.1225,0.175,0.25,0.175,0.1225,0.08575,0.060025,0.0420175,0.02941225,0.020588575)
+rowFour <- c(0.08575,0.1225,0.175,0.25,0.175,0.1225,0.08575,0.060025,0.0420175,0.02941225)
+rowFive <- c(0.060025, 0.08575,0.1225,0.175,0.25,0.175,0.1225,0.08575,0.060025,0.0420175)
+rowSix <- c(0.0420175, 0.060025, 0.08575,0.1225,0.175,0.25,0.175,0.1225,0.08575,0.060025)
+rowSeven <- c(0.02941225, 0.0420175, 0.060025, 0.08575,0.1225,0.175,0.25,0.175,0.1225,0.08575)
+rowEight <- c(0.020588575, 0.02941225, 0.0420175, 0.060025, 0.08575,0.1225,0.175,0.25,0.175,0.1225)
+rowNine <- c(0.0144120025,0.020588575, 0.02941225, 0.0420175, 0.060025, 0.08575,0.1225,0.175,0.25,0.175)
+rowTen <- c(0.0100884018,0.0144120025,0.020588575, 0.02941225, 0.0420175, 0.060025, 0.08575,0.1225,0.175,0.25)
+
+D <- c(rowOne,rowTwo,rowThree,rowFour,rowFive,rowSix,rowSeven,rowEight,rowNine,rowTen)
+Sigma <- matrix(D, byrow=TRUE, nrow=10, ncol=10)
+```
+
+```{r}
+sim <- matrix(0, nrow = 500, ncol = 10)
+
+L <- t(chol(Sigma))
+
+for(i in 1:500){
+  z <- rnorm(10)
+  sim[i,] <- L %*% z
+}
+```
+
+```{r}
+cov(sim[,1],sim[,2])
+cov(sim[,2],sim[,3])
+cov(sim[,3],sim[,4])
+cov(sim[,4],sim[,5])
+cor(sim[,1],sim[,2])
+cor(sim[,2],sim[,3])
+cor(sim[,3],sim[,4])
+cor(sim[,4],sim[,5])
+```
+
