@@ -1,0 +1,266 @@
+---
+title: " "Spatial Clustering with ClustGeo: A Learning Guide"
+author: "Gugo Babayan"
+date: "2023-10-18"
+output: html_document
+
+---
+# Learning Guide 
+
+This file aims to introduce you the basics of spatial clustering, particularly the Clust Geo package. The first part is a demonstration of how the package works on a sample data set and the second part is an exercise that is based on the demonstration.
+
+## Overwiew
+
+Package Purpose:
+
+ClustGeo offers a Ward-like hierarchical clustering algorithm, which takes into account spatial constraints. It requires two dissimilarity matrices (D0 for feature space(non-geo variables chosen for clustering) and D1 for constraint(geometric features) space) and a mixing parameter alpha to balance between the two dissimilarities.
+
+## Dataset
+
+The 'world' dataset contains geographical data of different regions/countries, including gdp per capita, life expectancy, etc.
+
+ Installation of necesssary libraries and dataset Setup:
+
+```{r message=FALSE}
+library(ClustGeo)   # Hierarchical clustering for spatial data
+library(sf)         # Handles spatial data in R
+library(spData)     # Datasets for spatial analysis
+library(tmap)       # Thematic map creation
+library(ggmap)
+library(ggplot2)
+```
+
+# Part 1
+
+#### Step 1: Data Preparation and Cleaning
+```{r}
+world<-na.omit(world)
+head(world)
+```
+#### Step 2: Calculating dissimilartites(distances)
+Before clustering, we need to calculate the dissimilarities between data points. We'll compute two dissimilarity matrices: one for the numeric data, D0, (lifeExp and gdpPercap) and one for the spatial information, D1(geom).
+
+```{r}
+#data for numeric dissimilarity
+world_data_1 <- world[, c("lifeExp", "gdpPercap")]
+head(world_data_1)
+```
+When you subset a data frame or a spatial data frame like world, it tries to retain the geom column because it's critical for spatial operations. Here's how you can properly subset the data to exclude the geom column:
+
+```{r}
+world_data_2 <- st_set_geometry(world[, c("lifeExp", "gdpPercap")], NULL)
+head(world_data_2)
+
+numeric_data<-world_data_2 #this dataset contains only for "feature space", meaning no geographical constraint
+geo_data<-world_data_1 #this dataset also includes the geom variable
+
+```
+The st_set_geometry(..., NULL) function will effectively drop the geometry (geom) column, and the result will be a regular data frame as above. Now, 'world_data_1' contains the 'geom' column but 'world_data_2' does not.
+
+
+Compute Dissimilarty Metrices: 
+
+
+```{r}
+dist_data <- dist(numeric_data) # Compute the Euclidean distance matrix for the numeric data and assign it to 'dist_data'
+dist_geo <- st_distance(geo_data)# Compute the geographical distance matrix for the geographical data and assign it to 'dist_geo'
+
+# 'geo_data' is expected to be of a spatial data type that 'st_distance' can handle, like sf objects
+
+
+
+D0<-dist_data
+D1<-as.dist(dist_geo)
+```
+
+
+#### Step 3: Hierarchical clustering
+
+The function hclustgeo implements a Ward-like hierarchical clustering algorithm with soft contiguity constraint. The main arguments of the function are:
+
+--a matrix D0 with the dissimilarities in the “feature space” (here lifeExp and gdpPercap variables for instance).
+--a matrix D1 with the dissimilarities in the “constraint” space (here a geom variable used for geographical dissimilarities).
+--a mixing parameter alpha between 0 an 1. The mixing parameter sets the importance of the constraint in the clustering procedure.
+--a scaling parameter scale with a logical value. If TRUE the dissimilarity matrices D0 and D1 are scaled between 0 and 1 (that is divided by their maximum value).
+
+
+
+```{r}
+#Hierarchical clustering for D0 (dissimilarity matrix for gdp per capita and life expectancy)
+tree <- hclustgeo(D0) # performs hierarchical clustering using hclustgeo function
+plot(tree,hang = -1, label = FALSE,  
+     xlab = "", sub = "",
+     main = "Ward dendrogram with D0 only") #creates a plot of hierachical clustering tree ( parameters are set to omit the labels and make the leaves of dendogram hang down).
+
+rect.hclust(tree ,k = 5, border = c(4,5,3,2,1)) #T adds rectangles around the branches of the dendrogram to highlight the clusters formed when the tree is cut into five groups (specified by k = 5).
+
+legend("topright", legend = paste("cluster",1:5), 
+       fill=1:5,bty= "n", border = "white") #creating a legend for the plot
+```
+
+#### Step 4: Visualizaing the Cluster into the map##
+
+```{r}
+
+K5<-cutree(tree,5)
+
+world$cluster <- factor(K5) ## add the clusters to world datasets
+
+
+# Start the ggplot object, specifying the data and aesthetics
+ggplot(data = world) +
+  
+  # Add geometries with fill based on cluster, minimal border size for a cleaner look
+  geom_sf(aes(fill = cluster), size = 0.1) +
+  
+  # Use a minimal theme for a clean  look
+  theme_minimal() +
+  
+  # Adjust text size for better readability
+  theme(text = element_text(size = 10)) +
+  
+  # Add a title and labels
+  labs(
+    title = "World Map of Countries based on D0(gpdPercap and lifeExp) Clustering",  # Main title
+    fill = "Cluster",  # Legend title
+    caption = "Source: Your Data Source"  # Source or additional information
+  ) +
+  
+  # Set the position of the legend
+  theme(legend.position = "bottom") +
+  
+  # Use a viridis color scale for a visually appealing and perceptually uniform color mapping
+  scale_fill_viridis_d() 
+  
+
+```
+
+#### Step 5:  Choosing an Alpha parameter for Clustering with Geographical Constraints##
+
+Setting alpha parametrs to clustering:
+The mixing parameter alpha in [0,1] sets the importance of D0 and D1 in the clustering process. When alpha=0 the geographical dissimilarities are not taken into account and when alpha=1 it is the socio-economic distances which are not taken into account and the clusters are obtained with the geographical distances only.
+
+
+
+How do we find the optimal alppha?  We can use 'choicealpha' function. 
+
+```{r}
+range.alpha <- seq(0,1,0.1) #the sequence of alpha(tuning parameter) values that will be used to perform the clustering.
+K <- 10#number of clusters
+cr <- choicealpha(D0, D1, range.alpha, 
+  K, graph = FALSE)
+cr$Q # proportion of explained inertia
+
+```
+Q represent the proportion of explained inertia, which is a measure of how well the clustering has performed. Inertia in clustering refers to the total variance in the dataset, and explained inertia is the portion of that variance that is captured by the clusters. A higher value of explained inertia indicates better clustering performance.
+
+Q0: This column represents the proportion of explained inertia for the clustering in the feature space (based on attributes like life expectancy, GDP per capita, etc.).
+Q1: This column represents the proportion of explained inertia for the clustering in the constraint space (based on spatial or geographical contiguity).
+
+Typically, you would choose an alpha value that balances the Q0 and Q1 values according to your analysis goals. For instance, if spatial contiguity is very important for your analysis, you might choose a higher alpha value.
+
+```{r}
+plot(cr,norm=TRUE)
+```
+We see that the proportion of explained inertia calculated with D0 (the socio-economic distances) is equal to 0.98  when alpha=0 and decreases when alpha inceases (black line). On the contrary the proportion of explained inertia calculated with D1 (the geographical distances) is equal to 0.96 when alpha=1 and decreases when alpha decreases (red line).
+
+
+Here the plot suggest to choose alpha=0.2 (top intersection), which balances the D0 and D1 inertias.
+
+## Clustering based on the Optimal Alpha value##
+```{r fig.width= 8, fig.height= 12}
+tree <- hclustgeo(D0, D1, alpha = 0.2) # You can modify the alpha parameter as needed.
+clusters <- cutree(tree, k=10)
+world$cluster_2 <- factor(clusters)
+
+
+plot(tree,hang = -1, label = FALSE, 
+     xlab = "", sub = "",
+     main = "Ward dendrogram with D0,D1 and alpha parameter")
+
+rect.hclust(tree ,k = 10, border = c(1:10))
+
+legend("topright", legend = paste("cluster_2",1:10), 
+       fill=1:10,bty= "n", border = "white")
+```
+
+## Visualizing the Clusters##
+```{r}
+
+# Start the ggplot object, specifying the data and aesthetics
+ggplot(data = world) +
+  
+  # Add geometries with fill based on cluster, minimal border size for a cleaner look
+  geom_sf(aes(fill = cluster_2)) +
+  
+  # Use a minimal theme for a clean  look
+  theme_minimal() +
+  
+  # Adjust text size for better readability
+  theme(text = element_text(size = 10)) +
+  
+  # Add a title and labels
+  labs(
+    title = "Countries based on socio-economic(D0) and Geographic(D1) Clustering ",  # Main title
+    fill = "Cluster"
+  ) +
+  
+  # Set the position of the legend
+  theme(legend.position = "bottom") +
+  
+  # Use a viridis color scale for a visually appealing and perceptually uniform color mapping
+  scale_fill_viridis_d() 
+  
+```
+
+
+
+# Part 2
+
+## Exercise: Cluster the countries in the world dataset based on the population (pop) and territory (area_km2)
+
+
+
+Step 1). Create data subsets for calculating D0 ("feature space" dissimilarity) and D1("Constraint Space" dissimilarity).
+```{r}
+# # Data for feature space dissimilarity (pop and area_km2)
+# data_for_D0<-  st_set_geometry(world[, c("???", "???")], NULL)
+# 
+# # Data for constraint space dissimilarity(only the geom coulmns)
+# 
+# data_for_D1<- ???
+
+```
+   
+Step 2). Calculate the disimilarites (distances) for D0 and D1
+```{r}
+# # Numeric dissimilarity
+#  D0<- dist(???)
+# 
+# # Spatial dissimilarity
+#  D1-as.dist(???)
+```
+   
+Step 3). Perform hierarchical clustering
+
+```{r}
+# tree<- hclustgeo(D0, D1, alpha = ?) #you might assign an alpha of your choice or calculate the optimal alpha using the function given above 'choicealpha'
+# plot(tree)
+# # Cut dendrogram to form k number clusters
+# clusters_pop&km2 <- cutree(tree, k = ??) assign the number of clusters (k)
+```
+
+
+Step 4). Visualize the clusters 
+```{r}
+# # Add the cluster information to the original dataset
+# world$cluster <- factor(???)
+# tm_shape(world) +
+#   tm_borders() +
+#   tm_compass()+
+#   tm_fill(col = "???", title = "Cluster", palette = "Set3") +
+#   tm_layout(title = "Spatial Clusters based on Population, Area, and Geography")
+```
+
+
+
