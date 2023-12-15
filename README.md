@@ -1,2 +1,8 @@
 # Brian-Gugo
-Comp 456 Research Team 
+Abstract: This project seeks to explore the impacts of transit development on the urban environment through a multi-faceted approach. Firstly, Gugo takes a look at the relationship between transit and direct urbanization in China and the United States. He creates a series of enticing vizualizations that consider urban development over time in multiple cities, seeking to contextualize differences in Chinese and American urbanity. Meanwhile Brian examines the smaller scale of transit developement, delving into the impact on local communities. This is done throuhg a case study on the Green Line light rail line in the Twin Cities, which seeks to determine if it has caused gentrification on the surrounding environments. A deeper dive into these two parts can be found in our individual project reports, focusing on our work throughout the semester.
+
+# Data Dependencies
+Brian: Census data is accessed through queries of the Census API using the tidycensus R package. Variables with the names B19013_001, B01003_001, B02001_002, B17010_001, B17010_002, B08301_001, B08301_010, B23025_001, B23025_002, and B25077_001 are accessed at a block group aggregation from Minnesota's Ramsey and Hennepin counties for 2013 and 2019, from which they are compared. While an API key is recommended to access data, one is not used and has no limitations on the ability to complete anaylsis for this project. Station locations are accessed through a handmade shapefile which can be accessed with the code dependency. Stations are represented by point locations. 
+
+# Code Dependencies
+Brian: This project is done entirely in R and requires the following packages: tidyverse, tidycensus, sf, and ggpubr. Visualizations are made using the ggplot2 package within tidyverse. 
