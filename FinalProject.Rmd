@@ -1,0 +1,236 @@
+---
+title: "CapstoneProject (Urban Growth)"
+author: "Gugo Babayan"
+date: "2023-10-31"
+output: html_document
+---
+
+
+```{r message=FALSE}
+
+library(tidyverse)
+library(jsonlite)
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+```
+
+```{r}
+ny_stations <- st_read("new-york_stations.geojson")
+beijing_stations<-st_read("beijing_stations.geojson")
+chicago_stations<-st_read("chicago_stations.geojson")
+la_stations<-st_read("los-angeles_stations.geojson")
+shanghai_stations<-st_read("shanghai_stations.geojson")
+guangzhou_stations<-st_read("guangzhou_stations.geojson")
+
+beijiing_section<-st_read("beijing_sections.geojson")
+
+ChicagoLayout<-st_read("ChicagoT1.geojson")
+```
+
+
+```{r}
+
+# Select the necessary columns and add a "City" field to each dataset
+ny_stations <- ny_stations %>% select(opening) %>% mutate(City = "New York")
+beijing_stations <- beijing_stations %>% select(opening) %>% mutate(City = "Beijing")
+chicago_stations <- chicago_stations %>% select(opening) %>% mutate(City = "Chicago")
+la_stations <- la_stations %>% select(opening) %>% mutate(City = "Los Angeles")
+shanghai_stations <- shanghai_stations %>% select(opening) %>% mutate(City = "Shanghai")
+guangzhou_stations <- guangzhou_stations %>% select(opening) %>% mutate(City = "Guangzhou")
+
+# Combine the datasets
+all_stations <- rbind(
+  ny_stations,
+  beijing_stations,
+  chicago_stations,
+  la_stations,
+  shanghai_stations,
+  guangzhou_stations
+)
+
+# Ensure the "opening" column is numeric
+all_stations$opening <- as.numeric(all_stations$opening)
+
+# Filter out invalid years (if necessary)
+all_stations <- all_stations %>% filter(opening > 0 & opening < 3000)
+
+# Group by city and year, and count the number of stations
+station_counts <- all_stations %>%
+  group_by(City, opening) %>%
+  summarise(StationCount = n()) %>%
+  arrange(City, opening)
+
+# Create the plot
+ggplot(station_counts, aes(x = opening, y = StationCount, color = City, group = City)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Number of Station Openings by City Over the Years",
+       x = "Year",
+       y = "Number of Stations Opened",
+       color = "City") +
+  theme_minimal()
+
+
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Select the necessary columns and add a "City" field to each dataset
+ny_stations <- ny_stations %>% select(opening) %>% mutate(City = "New York")
+beijing_stations <- beijing_stations %>% select(opening) %>% mutate(City = "Beijing")
+chicago_stations <- chicago_stations %>% select(opening) %>% mutate(City = "Chicago")
+la_stations <- la_stations %>% select(opening) %>% mutate(City = "Los Angeles")
+shanghai_stations <- shanghai_stations %>% select(opening) %>% mutate(City = "Shanghai")
+guangzhou_stations <- guangzhou_stations %>% select(opening) %>% mutate(City = "Guangzhou")
+
+# Combine the datasets
+all_stations <- rbind(
+  ny_stations,
+  beijing_stations,
+  chicago_stations,
+  la_stations,
+  shanghai_stations,
+  guangzhou_stations
+)
+
+# Ensure the "opening" column is numeric
+all_stations$opening <- as.numeric(all_stations$opening)
+
+# Filter out invalid years (if necessary)
+all_stations <- all_stations %>% filter(opening > 0 & opening < 3000)
+
+# Group by city and year, and count the number of stations
+station_counts <- all_stations %>%
+  group_by(City, opening) %>%
+  summarise(StationCount = n()) %>%
+  arrange(City, opening)
+
+# Define a color palette
+city_colors <- c("New York" = "#1f77b4", "Beijing" = "#ff7f0e", "Chicago" = "#2ca02c", 
+                 "Los Angeles" = "#d62728", "Shanghai" = "#9467bd", "Guangzhou" = "#8c564b")
+
+# Create the plot
+p <- ggplot(station_counts, aes(x = opening, y = StationCount, color = City, group = City)) +
+  geom_line(size = 1.2) +
+  labs(title = "Number of Station Openings by City Over the Years",
+       subtitle = "A comparison of transit station growth across cities",
+       x = "Year",
+       y = "Number of Stations Opened",
+       color = "City") +
+  scale_color_manual(values = city_colors) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom")
+
+print(p)
+
+```
+```{r}
+
+# Select the necessary columns and add a "City" field to each dataset
+ny_stations <- ny_stations %>% select(opening) %>% mutate(City = "New York")
+beijing_stations <- beijing_stations %>% select(opening) %>% mutate(City = "Beijing")
+chicago_stations <- chicago_stations %>% select(opening) %>% mutate(City = "Chicago")
+la_stations <- la_stations %>% select(opening) %>% mutate(City = "Los Angeles")
+shanghai_stations <- shanghai_stations %>% select(opening) %>% mutate(City = "Shanghai")
+guangzhou_stations <- guangzhou_stations %>% select(opening) %>% mutate(City = "Guangzhou")
+
+# Combine the datasets
+all_stations <- rbind(
+  ny_stations,
+  beijing_stations,
+  chicago_stations,
+  la_stations,
+  shanghai_stations,
+  guangzhou_stations
+)
+
+# Ensure the "opening" column is numeric
+all_stations$opening <- as.numeric(all_stations$opening)
+
+# Filter out invalid years (if necessary)
+all_stations <- all_stations %>% filter(opening > 0 & opening < 2030)
+
+# Group by city and year, and count the number of stations
+station_counts <- all_stations %>%
+  group_by(City, opening) %>%
+  summarise(StationCount = n()) %>%
+  arrange(City, opening)
+
+# Calculate the cumulative sum of stations for each city
+station_counts <- station_counts %>%
+  group_by(City) %>%
+  mutate(CumulativeStations = cumsum(StationCount)) %>%
+  ungroup()
+
+# Define a color palette
+city_colors <- c("New York" = "#1f77b4", "Beijing" = "#ff7f0e", "Chicago" = "#2ca02c", 
+                 "Los Angeles" = "#d62728", "Shanghai" = "#9467bd", "Guangzhou" = "#8c564b")
+
+p <- ggplot(station_counts, aes(x = opening, y = CumulativeStations, color = City, group = City)) +
+  geom_line(size = 1.2) +
+  labs(title = "Cumulative Growth of Transit Stations by City",
+       subtitle = "Tracking the expansion of transit networks over time",
+       x = "Year",
+       y = "Cumulative Number of Stations",
+       color = "City") +
+  scale_color_manual(values = city_colors) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom")
+
+print(p)
+```
+```{r}
+
+# Add a 'Country' field to each dataset
+ny_stations <- ny_stations %>% mutate(City = "New York", Country = "USA")
+beijing_stations <- beijing_stations %>% mutate(City = "Beijing", Country = "China")
+chicago_stations <- chicago_stations %>% mutate(City = "Chicago", Country = "USA")
+la_stations <- la_stations %>% mutate(City = "Los Angeles", Country = "USA")
+shanghai_stations <- shanghai_stations %>% mutate(City = "Shanghai", Country = "China")
+guangzhou_stations <- guangzhou_stations %>% mutate(City = "Guangzhou", Country = "China")
+
+# Combine the datasets
+all_stations <- rbind(
+  ny_stations,
+  beijing_stations,
+  chicago_stations,
+  la_stations,
+  shanghai_stations,
+  guangzhou_stations
+)
+
+# Ensure the "opening" column is numeric
+all_stations$opening <- as.numeric(all_stations$opening)
+
+# Filter out invalid years (if necessary)
+all_stations <- all_stations %>% filter(opening > 0 & opening < 3000)
+
+# Group by country and year, and count the number of stations
+country_station_counts <- all_stations %>%
+  group_by(Country, opening) %>%
+  summarise(StationCount = n(), .groups = "drop") %>%
+  arrange(Country, opening)
+
+
+# Define a color palette for countries
+country_colors <- c("China" = "#ff7f0e", "USA" = "#1f77b4")
+
+# Create the plot
+p <- ggplot(country_station_counts, aes(x = opening, y = StationCount, color = Country, group = Country)) +
+  geom_line(size = 1.2) +
+  labs(title = "Number of Station Openings by Country Over the Years",
+       subtitle = "A comparison of transit station growth between China and the USA",
+       x = "Year",
+       y = "Number of Stations Opened",
+       color = "Country") +
+  scale_color_manual(values = country_colors) +
+  theme_minimal(base_size = 15) +
+  theme(legend.position = "bottom")
+
+print(p)
+
+```
+
