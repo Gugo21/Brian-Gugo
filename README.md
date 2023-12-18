@@ -7,4 +7,4 @@ Gugo: My first dataset, from [Citylines.co](https://www.citylines.co/), details 
 
 # Code Dependencies
 Brian: This project is done entirely in R and requires the following packages: tidyverse, tidycensus, sf, and ggpubr. Visualizations are made using the ggplot2 package within tidyverse. 
-Gugo: I answered my research question by mostly using Tableu where I created interactive maps to show the growth of transit lines and changes in urban landscape. However, I also used Python to show the spatial visualization in a quantitative mode by creating line/bar graphs showing the growth of transit system and the proportions of urban, suburban, rural layouts in Chinese and American cities. 
+Gugo: I answered my research question by mostly using Tableu where I created interactive maps to show the growth of transit lines and changes in urban landscape. However, I also used R and Python to show the spatial visualization in a quantitative mode by creating line/bar graphs showing the growth of transit system and the proportions of urban, suburban, rural layouts in Chinese and American cities. 
