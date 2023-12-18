@@ -3,6 +3,8 @@ Abstract: This project seeks to explore the impacts of transit development on th
 
 # Data Dependencies
 Brian: Census data is accessed through queries of the Census API using the tidycensus R package. Variables with the names B19013_001, B01003_001, B02001_002, B17010_001, B17010_002, B08301_001, B08301_010, B23025_001, B23025_002, and B25077_001 are accessed at a block group aggregation from Minnesota's Ramsey and Hennepin counties for 2013 and 2019, from which they are compared. While an API key is recommended to access data, one is not used and has no limitations on the ability to complete anaylsis for this project. Station locations are accessed through a handmade shapefile which can be accessed with the code dependency. Stations are represented by point locations. 
+Gugo: My first dataset, from [Citylines.co](https://www.citylines.co/), details transit lines/stations of each city, including geographical attributes and operational timelines. The second dataset, from the [Atlas of Urban Expansion](http://atlasofurbanexpansion.org/), provides raster data categorizing locations as urban, suburban, rural, or exurban.
 
 # Code Dependencies
 Brian: This project is done entirely in R and requires the following packages: tidyverse, tidycensus, sf, and ggpubr. Visualizations are made using the ggplot2 package within tidyverse. 
+Gugo: I answered my research question by mostly using Tableu where I created interactive maps to show the growth of transit lines and changes in urban landscape. However, I also used Python to show the spatial visualization in a quantitative mode by creating line/bar graphs showing the growth of transit system and the proportions of urban, suburban, rural layouts in Chinese and American cities. 
